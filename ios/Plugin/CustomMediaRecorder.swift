@@ -50,7 +50,7 @@ class CustomMediaRecorder {
             originalRecordingSessionCategory = recordingSession.category
             try recordingSession.setCategory(AVAudioSession.Category.playAndRecord)
             try recordingSession.setActive(true)
-            baseAudioFilePath = getDirectoryToSaveAudioFile().appendingPathComponent("recording-\(Int(Date().timeIntervalSince1970 * 1000)).aac")
+            baseAudioFilePath = getDirectoryToSaveAudioFile().appendingPathComponent("recording-\(Int(Date().timeIntervalSince1970 * 1000)).m4a")
 
             // Initialize segment tracking
             audioFileSegments = [baseAudioFilePath]
@@ -135,7 +135,7 @@ class CustomMediaRecorder {
                     let directory = getDirectoryToSaveAudioFile()
                     let timestamp = Int(Date().timeIntervalSince1970 * 1000)
                     let segmentNumber = audioFileSegments.count
-                    let segmentPath = directory.appendingPathComponent("recording-\(timestamp)-segment-\(segmentNumber).aac")
+                    let segmentPath = directory.appendingPathComponent("recording-\(timestamp)-segment-\(segmentNumber).m4a")
 
                     // Initialize new recorder with segment file
                     audioRecorder = try AVAudioRecorder(url: segmentPath, settings: settings)
