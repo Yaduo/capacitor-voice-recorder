@@ -4,6 +4,9 @@ import Capacitor
 
 @objc(VoiceRecorder)
 public class VoiceRecorder: CAPPlugin {
+    
+    // --- 核心新增：定时器 for 输出音量 ---
+    private var meteringTimer: Timer?
 
     private var customMediaRecorder: CustomMediaRecorder?
 
@@ -59,6 +62,35 @@ public class VoiceRecorder: CAPPlugin {
             customMediaRecorder = nil
             call.reject(Messages.CANNOT_RECORD_ON_THIS_PHONE)
         } else {
+            // --- 核心新增：开启仪表并启动定时器 ---
+            // 1. 获取 recorder 实例并开启仪表监测
+            if let recorder = self.customMediaRecorder?.getAudioRecorder() {
+                recorder.isMeteringEnabled = true
+                
+                // 2. 启动定时器
+                DispatchQueue.main.async {
+                    self.meteringTimer?.invalidate() // 安全起见，先销毁旧的
+                    self.meteringTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+                        guard let self = self,
+                              let activeRecorder = self.customMediaRecorder?.getAudioRecorder(),
+                              activeRecorder.isRecording else { return }
+                        
+                        activeRecorder.updateMeters()
+                        let power = activeRecorder.averagePower(forChannel: 0)
+                        
+                        // 转换：-60dB (静音) 到 0dB (最大) 映射到 0.0 到 1.0
+                        let minDb: Float = -60.0
+                        var level: Float = 0.0
+                        if power > minDb {
+                            level = (power - minDb) / (0.0 - minDb)
+                        }
+
+                        // 通知前端
+                        self.notifyListeners("onVolumeChange", data: ["value": level])
+                    }
+                }
+            }
+            // --- 新增结束 ---
             call.resolve(ResponseGenerator.successResponse())
         }
     }
@@ -70,6 +102,12 @@ public class VoiceRecorder: CAPPlugin {
         }
 
         let stopSuccess = customMediaRecorder?.stopRecording() ?? false
+        
+        // --- 核心新增：停止录音时关闭定时器 ---
+        self.meteringTimer?.invalidate()
+        self.meteringTimer = nil
+        // --- 新增结束 ---
+        
         if !stopSuccess {
             customMediaRecorder = nil
             call.reject(Messages.FAILED_TO_MERGE_RECORDING)

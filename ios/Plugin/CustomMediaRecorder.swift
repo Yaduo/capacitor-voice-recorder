@@ -98,6 +98,11 @@ class CustomMediaRecorder {
     func getOutputFile() -> URL {
         return baseAudioFilePath
     }
+    
+    // 新增：允许外部获取 audioRecorder 实例
+    func getAudioRecorder() -> AVAudioRecorder? {
+        return self.audioRecorder
+    }
 
     func getDirectory(directory: String?) -> FileManager.SearchPathDirectory? {
         if let directory = directory {

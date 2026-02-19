@@ -91,4 +91,9 @@ export interface VoiceRecorderPlugin {
    * Remove all listeners for this plugin.
    */
   removeAllListeners(): Promise<void>;
+
+  // --- 核心新增：音量输出 ---
+  addListener(eventName: 'onVolumeChange', listenerFunc: (data: { value: number }) => void): Promise<PluginListenerHandle>;
+  addListener(eventName: 'voiceRecordingInterrupted', listenerFunc: () => void): Promise<PluginListenerHandle>;
+   // --- 新增结束 ---
 }
